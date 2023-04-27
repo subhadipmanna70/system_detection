@@ -2,10 +2,29 @@ import numpy as np
 from pydantic import BaseModel
 from fastapi import FastAPI, UploadFile, File
 import pickle
+import os
 from keras.models import load_model
 from keras.applications.vgg16 import preprocess_input
 from keras.utils import load_img, img_to_array
 app = FastAPI()
+from fastapi.middleware.cors import CORSMiddleware
+
+
+
+origins = ["*"]
+    # "http://localhost.tiangolo.com",
+    # "https://localhost.tiangolo.com",
+    # "http://localhost",
+    # "http://localhost:8080",
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 
 class test(BaseModel):
@@ -18,14 +37,17 @@ class test(BaseModel):
     dpf : float
     age : int
 
+@app.get('/')
+def read_root():
+    return{"Server":"Successfully running"}
 
 
-rf_model = pickle.load(open('rf_model.pkl', 'rb'))
 
 ### diabetes api
 @app.post('/diabetes_test')
 async def testing(it: test):
     data = np.array([[it.preg, it.glucose, it.bp, it.st, it.insulin, it.bmi, it.dpf, it.age]])
+    rf_model = pickle.load(open('rf_model.pkl', 'rb'))
 
     result = rf_model.predict(data)
     print(result)
@@ -49,7 +71,7 @@ def create_upload_file(file: UploadFile = File(...)):
     imagee = np.expand_dims(imagee, axis=0)
     img_data = preprocess_input(imagee)
     prediction = model.predict(img_data)
-    # os.remove(f"images/{file.filename}")
+    os.remove(f"images/{file.filename}")
     if prediction[0][0] > prediction[0][1]:  # Printing the prediction of model.
         value = 0                     ### not affected
     else:
