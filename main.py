@@ -3,12 +3,12 @@ from pydantic import BaseModel
 from fastapi import FastAPI, UploadFile, File
 import pickle
 import os
+from typing import Annotated
 from keras.models import load_model
 from keras.applications.vgg16 import preprocess_input
 from keras.utils import load_img, img_to_array
 app = FastAPI()
 from fastapi.middleware.cors import CORSMiddleware
-
 
 
 origins = ["*"]
@@ -36,6 +36,7 @@ class test(BaseModel):
     bmi : float
     dpf : float
     age : int
+    file: UploadFile
 
 @app.get('/')
 def read_root():
@@ -57,8 +58,10 @@ async def testing(it: test):
 
 ##pneumonia api
 @app.post('/pneumonia_test')
-def create_upload_file(file: UploadFile = File(...)):
-    data=file.file.read()
+async def detection(file: Annotated[UploadFile,File()]):
+    print(file.filename)
+
+    data = await file.read()
 
     with open("images/"+file.filename,"wb") as f:
         f.write(data)
