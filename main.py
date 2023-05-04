@@ -36,7 +36,6 @@ class test(BaseModel):
     bmi : float
     dpf : float
     age : int
-    file: UploadFile
 
 @app.get('/')
 def read_root():
